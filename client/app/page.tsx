@@ -1,72 +1,55 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Menu, User, Settings, Moon, Sun } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Menu, User, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+interface Digimon {
+  id: number
+  name: string
+  level: string
+  image?: string
+}
+
 export default function DigidexPage() {
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [isIconAnimating, setIsIconAnimating] = useState(false)
-
-  useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode")
-    if (savedMode === "true") {
-      setIsDarkMode(true)
-      document.documentElement.classList.add("dark")
-    }
-  }, [])
-
-  const toggleDarkMode = () => {
-    setIsIconAnimating(true)
-    setTimeout(() => setIsIconAnimating(false), 600)
-
-    const newMode = !isDarkMode
-    setIsDarkMode(newMode)
-    localStorage.setItem("darkMode", String(newMode))
-    if (newMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }
-  interface Digimon {
-        name: string;
-        level: string;
-        image: String;
-  }
-  const [digimons, setDigimons] = useState<{ id: number; name: string; level: string }[]>([])
+  const [digimons, setDigimons] = useState<Digimon[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
   useEffect(() => {
-    // Req do back
-    fetch("http://localhost:5000/routes/digimons")
-    .then((res) => res.json())
-    .then((data) => {
-      // Mapear dados garantindo que cada digimon possua um ID
-      const formatted = (data as Digimon[]).map((digimon, index) => ({
-        id: index + 1,
-        name: digimon.name,
-        level: digimon.level,
-        image: digimon.image
-      }));
-      setDigimons(formatted);
-    })
-    .catch ((err) => {
-      console.error("Erro ao carregar Digimons:", err)
-    });
-  }, []);
+    document.documentElement.classList.add("dark")
+  }, [])
 
-  const selectedDigimon = digimons.find((d) => d.id === selectedId)
+  useEffect(() => {
+    fetch("http://localhost:5000/routes/digimons")
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = (data as any[]).map((digimon, index) => ({
+          id: index + 1,
+          name: digimon.name,
+          level: digimon.level,
+          image: digimon.image,
+        }))
+        setDigimons(formatted)
+        if (formatted.length > 0) {
+          setSelectedId(formatted[0].id)
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao carregar Digimons:", err)
+      })
+  }, [])
+
+  const selectedDigimon = useMemo(() => digimons.find((d) => d.id === selectedId), [digimons, selectedId])
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-[#0a0a0a]">
+    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       {/* Header */}
-      <header className="bg-gradient-to-r from-[#ef4444] via-[#f97316] to-[#eab308] dark:from-[#1e1b4b] dark:via-[#312e81] dark:to-[#1e3a8a] border-b-4 border-[#fbbf24] dark:border-[#6366f1]">
+      <header className="bg-gradient-to-r from-[#1e1b4b] via-[#312e81] to-[#1e3a8a] border-b-4 border-[#6366f1]">
         <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#fbbf24] to-[#f59e0b] dark:from-[#818cf8] dark:to-[#6366f1] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.6)] dark:shadow-[0_0_20px_rgba(99,102,241,0.6)] border-2 sm:border-4 border-white dark:border-[#4338ca] animate-pulse">
-                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-[#3b82f6] to-[#2563eb] dark:from-[#c084fc] dark:to-[#a855f7] rounded-full shadow-inner" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#818cf8] to-[#6366f1] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.6)] border-2 sm:border-4 border-[#4338ca] animate-pulse">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-[#c084fc] to-[#a855f7] rounded-full shadow-inner" />
               </div>
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
                 DIGIDEX
@@ -77,17 +60,7 @@ export default function DigidexPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={toggleDarkMode}
-                className="cursor-pointer bg-white/90 hover:bg-white dark:bg-[#312e81] dark:hover:bg-[#1e1b4b] text-[#0f172a] dark:text-[#c084fc] font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-xs sm:text-sm"
-              >
-                <div className={`${isIconAnimating ? "animate-[spin_0.6s_ease-in-out]" : ""}`}>
-                  {isDarkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
-                </div>
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="cursor-pointer bg-white/90 hover:bg-white dark:bg-[#312e81] dark:hover:bg-[#1e1b4b] text-[#0f172a] dark:text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-xs sm:text-sm"
+                className="bg-[#312e81] hover:bg-[#1e1b4b] text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-xs sm:text-sm"
               >
                 <Menu className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
                 <span className="hidden sm:inline">Menu</span>
@@ -95,7 +68,7 @@ export default function DigidexPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="cursor-pointer bg-white/90 hover:bg-white dark:bg-[#312e81] dark:hover:bg-[#1e1b4b] text-[#0f172a] dark:text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-xs sm:text-sm"
+                className="bg-[#312e81] hover:bg-[#1e1b4b] text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-xs sm:text-sm"
               >
                 <User className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
                 <span className="hidden sm:inline">Conta</span>
@@ -103,7 +76,7 @@ export default function DigidexPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="cursor-pointer bg-white/90 hover:bg-white dark:bg-[#312e81] dark:hover:bg-[#1e1b4b] text-[#0f172a] dark:text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-xs sm:text-sm"
+                className="bg-[#312e81] hover:bg-[#1e1b4b] text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-xs sm:text-sm"
               >
                 <Settings className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
                 <span className="hidden sm:inline">Config</span>
@@ -118,7 +91,7 @@ export default function DigidexPage() {
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 max-w-[1600px] mx-auto h-auto lg:h-[700px]">
           {/* Left Side - Digimon Display */}
           <div className="w-full lg:w-[55%] h-auto lg:h-full bg-gradient-to-br from-[#475569] via-[#334155] to-[#1e293b] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 border-2 sm:border-4 border-[#fbbf24] flex flex-col">
-            <div className="bg-[#0f172a] rounded-lg sm:rounded-xl p-4 sm:p-6 border border-[#64748b] sm:border-2 h-auto lg:h-[560px] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+            <div className="bg-[#0f172a] rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border border-[#64748b] sm:border-2 h-auto lg:h-[580px] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
               {/* Decorative Grid Background */}
               <div className="absolute inset-0 opacity-20">
                 <div className="grid grid-cols-8 grid-rows-8 h-full w-full">
@@ -128,33 +101,32 @@ export default function DigidexPage() {
                 </div>
               </div>
 
-              {/* Image Placeholder */}
-              <div className="relative z-10 w-full max-w-xs sm:max-w-md lg:max-w-lg aspect-square bg-gradient-to-br from-[#3b82f6]/30 via-[#8b5cf6]/20 to-[#10b981]/30 rounded-lg sm:rounded-xl border-2 sm:border-4 border-dashed border-[#64748b] flex items-center justify-center mb-4 sm:mb-6 shadow-[inset_0_0_30px_rgba(59,130,246,0.2)]">
-                {selectedDigimon ? (
-                  <img
-                    src={selectedDigimon.image} // usa a URL da imagem
-                    alt={selectedDigimon.name}
-                    className="w-full h-full object-contain rounded-lg sm:rounded-xl"
-                  />
-                ) : (
-                  <div className="text-center">
-                    <div className="text-4xl sm:text-5xl lg:text-6xl mb-2 sm:mb-4">🔷</div>
-                    <p className="text-[#cbd5e1] font-mono text-xs sm:text-sm">Imagem do Digimon</p>
-                    <p className="text-[#64748b] font-mono text-[10px] sm:text-xs mt-1 sm:mt-2">(Conectar ao banco de dados)</p>
-                  </div>
-                )}
+              <div className="relative z-10 w-full h-auto flex-1 flex items-center justify-center mb-2 sm:mb-3 lg:mb-4 px-2">
+                <div className="w-full h-full max-h-[350px] sm:max-h-[400px] lg:max-h-[420px] bg-white rounded-lg sm:rounded-xl border-2 sm:border-4 border-dashed border-[#3b82f6] flex items-center justify-center p-4 sm:p-6 lg:p-8">
+                  {selectedDigimon?.image ? (
+                    <img
+                      src={selectedDigimon.image || "/placeholder.svg"}
+                      alt={selectedDigimon.name}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <div className="text-4xl sm:text-5xl lg:text-6xl mb-2 sm:mb-4">🔷</div>
+                      <p className="text-[#64748b] font-mono text-xs sm:text-sm">Imagem do Digimon</p>
+                      <p className="text-[#94a3b8] font-mono text-[10px] sm:text-xs mt-1 sm:mt-2">
+                        (Conectar ao banco de dados)
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Digimon Info */}
               {selectedDigimon && (
-                <div className="relative z-10 text-center space-y-2 sm:space-y-3 bg-[#1e293b]/80 p-4 sm:p-6 rounded-lg border border-[#64748b] w-full backdrop-blur-sm">
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#fbbf24] tracking-wide">
+                <div className="relative z-10 text-center space-y-1 sm:space-y-2 bg-[#1e293b]/80 p-3 sm:p-4 lg:p-5 rounded-lg border border-[#64748b] w-full backdrop-blur-sm pb-4 sm:pb-5 lg:pb-6">
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#fbbf24] tracking-wide break-words px-2">
                     {selectedDigimon.name.toUpperCase()}
                   </h2>
-                  <div className="flex justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                    <span className="bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white px-3 sm:px-4 py-1 rounded-full font-semibold shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                    {/*  {selectedDigimon.type} */}
-                    </span>
+                  <div className="flex justify-center gap-2 sm:gap-3 text-xs sm:text-sm flex-wrap pb-1">
                     <span className="bg-gradient-to-r from-[#10b981] to-[#059669] text-white px-3 sm:px-4 py-1 rounded-full font-semibold shadow-[0_0_15px_rgba(16,185,129,0.5)]">
                       {selectedDigimon.level}
                     </span>
@@ -181,7 +153,7 @@ export default function DigidexPage() {
                     <button
                       key={digimon.id}
                       onClick={() => setSelectedId(digimon.id)}
-                      className={`w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left border-b border-[#334155] cursor-pointer transition-all duration-300 ease-in-out h-[60px] sm:h-[68px] lg:h-[72px] flex items-center ${
+                      className={`w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left border-b border-[#334155] transition-all duration-300 ease-in-out h-[60px] sm:h-[68px] lg:h-[72px] flex items-center ${
                         isSelected
                           ? "bg-gradient-to-r from-[#065f46] to-[#047857] border-l-2 sm:border-l-4 border-l-[#10b981]"
                           : "hover:bg-[#1e293b] hover:border-l-2 sm:hover:border-l-4 hover:border-l-[#64748b] hover:shadow-lg"
