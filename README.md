@@ -59,3 +59,7 @@ Este projeto foi desenvolvido para fins educacionais e de teste de APIs.
 ---
 
 Desenvolvido para testar APIs de Digimons.
+###
+<img width="1919" height="947" alt="Image" src="https://github.com/user-attachments/assets/1d0209b6-5fd8-4542-9582-6e177cc12c59" />
+<img width="1918" height="946" alt="Image" src="https://github.com/user-attachments/assets/bbc73000-4b69-40a3-a5e8-feb998c8bde3" />
+
